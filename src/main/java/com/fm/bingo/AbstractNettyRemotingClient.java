@@ -10,11 +10,14 @@ import io.netty.util.concurrent.EventExecutorGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
-public class AbstractNettyRemotingClient extends AbstractNettyRemoting implements RemotingClient {
+public abstract class AbstractNettyRemotingClient extends AbstractNettyRemoting implements RemotingClient {
     private static final Logger logger = LoggerFactory.getLogger(AbstractNettyRemoting.class);
     private static final long SCHEDULE_DELAY_MILLS = 60 * 1000L;
     private static final long SCHEDULE_INTERVAL_MILLS = 10 * 1000L;
@@ -30,7 +33,8 @@ public class AbstractNettyRemotingClient extends AbstractNettyRemoting implement
     }
     @Override
     public void init() {
-        timerExecutor.scheduleAtFixedRate(() -> clientChannelManager.reconnect(), SCHEDULE_DELAY_MILLS, SCHEDULE_INTERVAL_MILLS, TimeUnit.MILLISECONDS);
+        timerExecutor.scheduleAtFixedRate(() -> clientChannelManager.reconnect(), SCHEDULE_DELAY_MILLS,
+                SCHEDULE_INTERVAL_MILLS, TimeUnit.MILLISECONDS);
         super.init();
         clientBootstrap.start();
     }
@@ -48,17 +52,50 @@ public class AbstractNettyRemotingClient extends AbstractNettyRemoting implement
     }
 
     @Override
-    public void sendAsyncRequest(Channel channel, Object msg) {
+    public void sendAsyncRequest(Channel channel, RpcMessage msg) {
+        if (channel == null) {
+            logger.warn("sendSyncRequest nothing, caused by null channel.");
+            return;
+        }
+        super.sendAsync(channel, msg);
+    }
 
+    @Override
+    public void sendAsyncRequest(RpcMessage msg) {
+        List<String> availableServers = this.getClientChannelManager().getAvailServerList();
+        Channel channel = clientChannelManager.acquireChannel(availableServers.get(0));
+        super.sendAsync(channel, msg);
     }
     @Override
-    public void sendSyncRequest(Channel channel, Object msg) {
+    public Object sendSyncRequest(Channel channel, RpcMessage msg) throws TimeoutException {
+        if (channel == null) {
+            logger.warn("sendSyncRequest nothing, caused by null channel.");
+            return null;
+        }
+        return super.sendSync(channel, msg, this.getRpcRequestTimeout());
+    }
 
+    @Override
+    public Object sendSyncRequest(RpcMessage msg) throws TimeoutException {
+        List<String> availableServers = this.getClientChannelManager().getAvailServerList();
+        Channel channel = clientChannelManager.acquireChannel(availableServers.get(0));
+        return super.sendSync(channel, msg, this.getRpcRequestTimeout());
+    }
+
+    protected abstract long getRpcRequestTimeout();
+
+    @Override
+    public void destroy() {
+        clientBootstrap.shutdown();
+        super.destroy();
+    }
+
+    public void addRemoteServer(InetSocketAddress serverAddress) {
+        clientChannelManager.addAvailableServer(serverAddress);
     }
 
     @ChannelHandler.Sharable
     class ClientHandler extends ChannelDuplexHandler {
-
         @Override
         public void channelRead(final ChannelHandlerContext ctx, Object msg) throws Exception {
             if (!(msg instanceof RpcMessage)) {
@@ -66,7 +103,6 @@ public class AbstractNettyRemotingClient extends AbstractNettyRemoting implement
             }
             processMessage(ctx, (RpcMessage) msg);
         }
-
         @Override
         public void channelWritabilityChanged(ChannelHandlerContext ctx) {
             synchronized (lock) {
@@ -78,17 +114,20 @@ public class AbstractNettyRemotingClient extends AbstractNettyRemoting implement
         }
 
         @Override
+        public void channelActive(ChannelHandlerContext ctx) throws Exception {
+            super.channelActive(ctx);
+            logger.info("channel active: {}", ctx.channel());
+        }
+
+        @Override
         public void channelInactive(ChannelHandlerContext ctx) throws Exception {
             if (messageExecutor.isShutdown()) {
                 return;
             }
-
             logger.info("channel inactive: {}", ctx.channel());
-
             clientChannelManager.releaseChannel(ctx.channel(), NetUtil.toStringAddress(ctx.channel().remoteAddress()));
             super.channelInactive(ctx);
         }
-
         @Override
         public void userEventTriggered(ChannelHandlerContext ctx, Object evt) {
             if (evt instanceof IdleStateEvent) {
@@ -111,15 +150,13 @@ public class AbstractNettyRemotingClient extends AbstractNettyRemoting implement
                         if (logger.isDebugEnabled()) {
                             logger.debug("will send ping msg,channel {}", ctx.channel());
                         }
-                        // TODO send ping message
-//                        AbstractNettyRemotingClient.this.sendAsyncRequest(ctx.channel(), new HeartbeatMessage());
+                        AbstractNettyRemotingClient.this.sendAsyncRequest(ctx.channel(), new HeartbeatMessage());
                     } catch (Throwable throwable) {
                         logger.error("send request error: {}", throwable.getMessage(), throwable);
                     }
                 }
             }
         }
-
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
             logger.error(NetUtil.toStringAddress(ctx.channel().remoteAddress()) + "connect exception. " + cause.getMessage(), cause);
@@ -129,7 +166,6 @@ public class AbstractNettyRemotingClient extends AbstractNettyRemoting implement
             }
             super.exceptionCaught(ctx, cause);
         }
-
         @Override
         public void close(ChannelHandlerContext ctx, ChannelPromise future) throws Exception {
             super.close(ctx, future);

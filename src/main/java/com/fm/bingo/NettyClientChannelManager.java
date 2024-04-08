@@ -1,12 +1,14 @@
 package com.fm.bingo;
 
 import com.fm.bingo.util.CollectionUtils;
+import com.fm.bingo.util.NetUtil;
 import io.netty.channel.Channel;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPoolConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -16,9 +18,9 @@ public class NettyClientChannelManager {
     private static final Logger logger = LoggerFactory.getLogger(AbstractNettyRemoting.class);
     private final ConcurrentMap<String, Object> channelLocks = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Channel> channels = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, Short> servers = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, NettyPoolKey> poolKeyMap = new ConcurrentHashMap<>();
     private final GenericKeyedObjectPool<NettyPoolKey, Channel> nettyClientKeyPool;
+    private final List<InetSocketAddress> availableInetSocketAddressList = new ArrayList<>();
     NettyClientChannelManager(final NettyPooledFactory keyPooledFactory,
                               final NettyClientConfig clientConfig) {
         nettyClientKeyPool = new GenericKeyedObjectPool<>(keyPooledFactory);
@@ -144,10 +146,17 @@ public class NettyClientChannelManager {
         }
         return null;
     }
+
     public List<String> getAvailServerList() {
-        if (servers.isEmpty()) {
+        if (availableInetSocketAddressList.isEmpty()) {
             return Collections.emptyList();
         }
-        return servers.entrySet().parallelStream().map(Map.Entry::getKey).collect(Collectors.toList());
+        return availableInetSocketAddressList.stream()
+                .map(NetUtil::toStringAddress)
+                .collect(Collectors.toList());
+    }
+
+    public void addAvailableServer(InetSocketAddress address) {
+        availableInetSocketAddressList.add(address);
     }
 }

@@ -21,7 +21,7 @@ public class RpcMessageDecoder extends LengthFieldBasedFrameDecoder {
     public Object decodeFrame(ByteBuf frame) {
         int header = frame.readInt();
         int requestId = frame.readInt();
-        int type = frame.readShort();
+        int type = frame.readInt();
         int length = frame.readInt();
 
         RpcMessage rpcMessage = new RpcMessage();

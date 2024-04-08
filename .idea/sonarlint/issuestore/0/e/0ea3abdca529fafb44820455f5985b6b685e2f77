@@ -1,16 +1,15 @@
 
-£
-java:S1186."€Add a nested comment explaining why this method is empty, throw an UnsupportedOperationException or complete the implementation.(×‡ßõøÿÿÿÿ8Œ¶†ìé1
-£
-java:S11863"€Add a nested comment explaining why this method is empty, throw an UnsupportedOperationException or complete the implementation.(µéûøÿÿÿÿ8Œ¶†ìé1
-£
-java:S11867"€Add a nested comment explaining why this method is empty, throw an UnsupportedOperationException or complete the implementation.(ìÄæàùÿÿÿÿ8Œ¶†ìé1
+z
+java:S2629¢"\Invoke method(s) only conditionally. Use the built-in formatting to construct this argument.(´ıöÔ8Í§Úåë1
 `
-java:S3416">Update this logger to use "AbstractNettyRemotingClient.class".(ªÿµ‹úÿÿÿÿ8áäÈìé1
-o
-java:S3776]"RRefactor this method to reduce its Cognitive Complexity from 17 to the 15 allowed.(ø‡ªÂ8ƒğìé1
-X	java:S125s"<This block of commented-out lines of code should be removed.(Ë¢ä™8áğÊìé1
-T
-java:S1135r"2Complete the task associated to this TODO comment.(ÔÌ„ƒüÿÿÿÿ8áğÊìé1
+java:S3416">Update this logger to use "AbstractNettyRemotingClient.class".(ªÿµ‹úÿÿÿÿ8¥«Úåë1
+V
+java:S5993"9Change the visibility of this constructor to "protected".(ÇïÓÍ8¦«Úåë1
+i
+java:S1612$"LReplace this lambda with method reference 'clientChannelManager::reconnect'.(ÖÖ†‚8®«Úåë1
+p
+java:S3776„"RRefactor this method to reduce its Cognitive Complexity from 17 to the 15 allowed.(ø‡ªÂ8½«Úåë1
+C
+java:S1181š"%Catch Exception instead of Throwable.(ëß‹™8Â«Úåë1
 K
-java:S1185†"(Remove this method to simply inherit it.(Ê»ùúÿÿÿÿ8‰ğìé1
+java:S1185ª"(Remove this method to simply inherit it.(Ê»ùúÿÿÿÿ8Ç«Úåë1

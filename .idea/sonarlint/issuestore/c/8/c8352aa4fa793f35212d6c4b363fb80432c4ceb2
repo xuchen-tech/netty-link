@@ -1,15 +1,28 @@
 
+b	java:S112Q"FDefine and throw a dedicated exception instead of using a generic one.(ä£ÿˆ8ÛŸ˜æë1
+h	java:S112ª"FDefine and throw a dedicated exception instead of using a generic one.(¥áÎñÿÿÿÿÿ8ÛŸ˜æë1
+|
+java:S1488¢"^Immediately return this expression instead of assigning it to the temporary variable "result".(‰Œ¹ç8İŸ˜æë1
 V
-java:S5993"9Change the visibility of this constructor to "protected".( Ş›Ô8ßÏ†ëé1
+java:S5993"9Change the visibility of this constructor to "protected".( Ş›Ô8‚ ˜æë1
 L
-java:S1172>"*Remove this unused method parameter "msg".(üØÎ‘øÿÿÿÿ8¦»çëé1
+java:S1172?"*Remove this unused method parameter "msg".(üØÎ‘øÿÿÿÿ8À ˜æë1
 €
-java:S2142J"^Either re-interrupt this method or rethrow the "InterruptedException" that can be caught here.(³¶ÅÀûÿÿÿÿ8§»çëé1
-]	java:S125G"<This block of commented-out lines of code should be removed.(İõİ¨şÿÿÿÿ8¨»çëé1
-]	java:S125K"<This block of commented-out lines of code should be removed.(º”Šˆûÿÿÿÿ8¨»çëé1
+java:S2142K"^Either re-interrupt this method or rethrow the "InterruptedException" that can be caught here.(³¶ÅÀûÿÿÿÿ8Á ˜æë1
+]	java:S125H"<This block of commented-out lines of code should be removed.(İõİ¨şÿÿÿÿ8Á ˜æë1
+o
+java:S3776Q"RRefactor this method to reduce its Cognitive Complexity from 16 to the 15 allowed.(ä£ÿˆ8Ã ˜æë1
+‰
+java:S1130Q"lRemove the declaration of thrown exception 'java.lang.Exception', as it cannot be thrown from method's body.(ä£ÿˆ8Å ˜æë1
+B
+java:S1181]"%Catch Exception instead of Throwable.(áù«õ8Ë ˜æë1
 ^
-java:S3457_"AFormat specifiers should be used instead of string concatenation.(‡Î¹õ8ÒÖÇìé1
+java:S3457d"AFormat specifiers should be used instead of string concatenation.(‡Î¹õ8Ì ˜æë1
+B
+java:S1181i"%Catch Exception instead of Throwable.(áù«õ8Ö ˜æë1
 7
-java:S3457i"Not enough arguments.(©ˆŞöùÿÿÿÿ8›÷Çìé1
-[
-java:S1144>"9Remove this unused private "channelWritableCheck" method.(üØÎ‘øÿÿÿÿ8©»çëé1
+java:S3457n"Not enough arguments.(©ˆŞöùÿÿÿÿ8× ˜æë1
+c
+java:S3457|"AFormat specifiers should be used instead of string concatenation.(è§ÉÂøÿÿÿÿ8é ˜æë1
+
+java:S2142¤"^Either re-interrupt this method or rethrow the "InterruptedException" that can be caught here.(šĞİ¦ÿÿÿÿÿ8ï ˜æë1

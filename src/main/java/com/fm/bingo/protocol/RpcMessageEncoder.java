@@ -10,7 +10,7 @@ public class RpcMessageEncoder extends MessageToByteEncoder<RpcMessage> {
     protected void encode(ChannelHandlerContext channelHandlerContext, RpcMessage rpcMessage, ByteBuf byteBuf) throws Exception {
         byteBuf.writeInt(rpcMessage.getHeader());
         byteBuf.writeInt(rpcMessage.getRequestId());
-        byteBuf.writeShort(rpcMessage.getType());
+        byteBuf.writeInt(rpcMessage.getType());
         byteBuf.writeInt(rpcMessage.getLength());
         if (rpcMessage.getLength() != 0) {
             byteBuf.writeBytes(rpcMessage.getPayload());

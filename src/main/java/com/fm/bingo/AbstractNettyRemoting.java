@@ -1,22 +1,23 @@
 package com.fm.bingo;
 
+import com.fm.bingo.common.FrameworkException;
 import com.fm.bingo.common.NamedThreadFactory;
 import com.fm.bingo.common.Pair;
 import com.fm.bingo.protocol.MessageFuture;
 import com.fm.bingo.protocol.RpcMessage;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import java.math.BigDecimal;
 import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.*;
 
-public abstract class AbstractNettyRemoting {
+public abstract class AbstractNettyRemoting implements Disposable {
     private static final Logger logger = LoggerFactory.getLogger(AbstractNettyRemoting.class);
     private static final long NOT_WRITEABLE_CHECK_MILLS = 10L;
     private static final int TIMEOUT_CHECK_INTERVAL = 3000;
@@ -72,13 +73,17 @@ public abstract class AbstractNettyRemoting {
                     }
                     lock.wait(NOT_WRITEABLE_CHECK_MILLS);
                 } catch (InterruptedException exx) {
-                    // LOGGER.error(exx.getMessage());
+                    logger.error(exx.getMessage());
                 }
             }
         }
     }
     protected void processMessage(ChannelHandlerContext ctx, RpcMessage rpcMessage) throws Exception {
         final Pair<RemotingProcessor, ExecutorService> pair = this.processorTable.get(rpcMessage.getType());
+        if (futures.containsKey(rpcMessage.getRequestId())) {
+            MessageFuture messageFuture = futures.remove(rpcMessage.getRequestId());
+            messageFuture.setResultMessage(rpcMessage);
+        }
         if (pair != null) {
             if (pair.getSecond() != null) {
                 try {
@@ -106,4 +111,64 @@ public abstract class AbstractNettyRemoting {
         }
     }
     public abstract void destroyChannel(String serverAddress, Channel channel);
+
+    @Override
+    public void destroy() {
+        timerExecutor.shutdown();
+        messageExecutor.shutdown();
+    }
+
+    protected void sendAsync(Channel channel, RpcMessage rpcMessage) {
+        channelWritableCheck(channel, rpcMessage.getPayload());
+        if (logger.isDebugEnabled()) {
+            logger.debug("write message:" + rpcMessage.getPayload() + ", channel:" + channel + ",active?"
+                    + channel.isActive() + ",writable?" + channel.isWritable() + ",isopen?" + channel.isOpen());
+        }
+
+        channel.writeAndFlush(rpcMessage).addListener((ChannelFutureListener) future -> {
+            if (!future.isSuccess()) {
+                destroyChannel(future.channel());
+            }
+        });
+    }
+
+    protected Object sendSync(Channel channel, RpcMessage rpcMessage, long timeoutMillis) throws TimeoutException {
+        if (timeoutMillis <= 0) {
+            throw new FrameworkException("timeout should more than 0ms");
+        }
+        if (channel == null) {
+            logger.warn("sendSync nothing, caused by null channel.");
+            return null;
+        }
+
+        MessageFuture messageFuture = new MessageFuture();
+        messageFuture.setRequestMessage(rpcMessage);
+        messageFuture.setTimeout(timeoutMillis);
+        futures.put(rpcMessage.getRequestId(), messageFuture);
+
+        channelWritableCheck(channel, rpcMessage.getPayload());
+
+        channel.writeAndFlush(rpcMessage).addListener((ChannelFutureListener) future -> {
+            if (!future.isSuccess()) {
+                MessageFuture messageFuture1 = futures.remove(rpcMessage.getRequestId());
+                if (messageFuture1 != null) {
+                    messageFuture1.setResultMessage(future.cause());
+                }
+                destroyChannel(future.channel());
+            }
+        });
+
+        try {
+            Object result = messageFuture.get(timeoutMillis, TimeUnit.MILLISECONDS);
+            return result;
+        } catch (Exception exx) {
+            logger.error("wait response error:{},ip:{},request:{}", exx.getMessage(), channel.remoteAddress(),
+                    rpcMessage.getPayload());
+            if (exx instanceof TimeoutException) {
+                throw (TimeoutException) exx;
+            } else {
+                throw new RuntimeException(exx);
+            }
+        }
+    }
 }

@@ -101,6 +101,6 @@ public class NettyClientBootstrap implements RemotingBootstrap {
     }
 
     private String getThreadPrefix(String threadPrefix) {
-        return threadPrefix + THREAD_PREFIX_SPLIT_CHAR + "compiler";
+        return threadPrefix + THREAD_PREFIX_SPLIT_CHAR + "client";
     }
 }
